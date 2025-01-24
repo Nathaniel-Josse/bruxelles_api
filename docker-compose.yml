@@ -1,0 +1,9 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: bruxelles_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - /Users/nathaniel/documents/docker_data
+    restart: always
