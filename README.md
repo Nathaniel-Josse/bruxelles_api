@@ -12,6 +12,9 @@ python main.py
 
 Les endpoints de l'API sont :
 - Liste des collections : http://127.0.0.1:8000/
+- Contenu d'une collection : http://127.0.0.1:8000/[collection]
+  <br>Exemple :
+  <br>http://127.0.0.1:8000/bruxelles_arbres_remarquables
 - Stats d'une collection : http://127.0.0.1:8000/[collection]/stats
   <br>Exemple :
   <br>http://127.0.0.1:8000/bruxelles_arbres_remarquables/stats

@@ -23,6 +23,12 @@ def get_stats(collection_name: str):
     count = collection.count_documents({})
     return {"total_records": count}
 
+@app.get("/{collection_name}/")
+def get_data(collection_name: str):
+    collection = db[collection_name]
+    results = collection.find({}, {"_id": 0})
+    return list(results)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
