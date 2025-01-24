@@ -3,7 +3,7 @@ Nathaniel Josse et Raphaël Roscian
 
 Commandes pour lancer le programme :
 ```bash
-pip install pandas request pymongo fastapi uvicorn
+pip install -r requirements.txt
 
 python fetch_and_store.py
 
