@@ -28,3 +28,6 @@ Collections disponibles :
 - Musées de Bruxelles : `musees-a-bruxelles`
 - Parcs et Jardins de Bruxelles : `bruxelles_parcs_et_jardins`
 - Streetart de Bruxelles : `streetart`
+
+Choix de la structure :
+Nous avons choisi de stocker les données dans 5 collections distinctes de MongoDB pour avoir une flexibilité maximale sur le contenu des données. Chaque collection contient des documents qui représentent les éléments de la collection.
