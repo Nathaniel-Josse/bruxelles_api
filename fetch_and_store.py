@@ -3,7 +3,7 @@ import pymongo.collection
 import requests
 import pymongo
 from fastapi import FastAPI
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, BulkWriteError
 
 def fetch_data(api_url):
     records = []
@@ -14,8 +14,9 @@ def fetch_data(api_url):
             response = requests.get(f"{api_url}?limit={limit}&offset={offset}")
             response.raise_for_status()
             data = response.json()
-            records.extend(data.get("records", []))
-            if len(data.get("records", [])) < limit:
+            results = data.get("results", [])
+            records.extend(results)
+            if len(results) < limit:
                 break
             offset += limit
         except requests.RequestException as e:
@@ -25,16 +26,16 @@ def fetch_data(api_url):
 
 def clean_data(records):
     df = pd.DataFrame(records)
-    df = df.drop_duplicates()
     df = df.fillna("Inconnu")
-    return df.to_dict("records")
+    if "id" not in df.columns:
+        df["id"] = range(1, len(df) + 1)
+    return df.to_dict(orient="records")
 
 def insert_into_mongo(collection: pymongo.collection.Collection, records):
-    for record in records:
-        try:
-            collection.insert_one(record)
-        except DuplicateKeyError:
-            pass  # Ignorer les doublons
+    try:
+        collection.insert_many(records, ordered=False)
+    except BulkWriteError as e:
+        print(f"Certains documents ont causé des erreurs de duplication : {e.details}")
         
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["opendata_brussels"]
@@ -48,12 +49,21 @@ API_URLS = [
 ]
 
 for url in API_URLS:
-    collection_name = url.split("/")[-2]
+    collection_name = url.split("/")[-2]  # Extrait le nom de la collection depuis l'URL
     print(f"Traitement de la collection: {collection_name}")
-    data = fetch_data(url)
-    cleaned_data = clean_data(data)
-    collection = db[collection_name]
-    collection.create_index("id", unique=True)  # Empêcher les doublons par ID
-    insert_into_mongo(collection, cleaned_data)
+    try:
+        data = fetch_data(url)
+        if not data:
+            print(f"Aucune donnée récupérée pour l'URL : {url}")
+            continue
+
+        cleaned_data = clean_data(data)
+        collection = db[collection_name]
+        insert_into_mongo(collection, cleaned_data)
+        print(f"Insertion réussie pour la collection: {collection_name}")
+    except BulkWriteError as bwe:
+        print(f"Erreur d'insertion en masse pour {collection_name}: {bwe.details}")
+    except Exception as e:
+        print(f"Erreur inattendue pour {collection_name}: {e}")
 
 print("Toutes les données ont été récupérées et insérées dans MongoDB.")
